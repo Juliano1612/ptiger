@@ -1,0 +1,77 @@
+GCCPTIGER_INSTALL_NAME := $(shell echo gccptiger|sed '$(program_transform_name)')
+GCCPTIGER_TARGET_INSTALL_NAME := $(target_noncanonical)-$(shell echo gccptiger|sed '$(program_transform_name)')
+
+ptiger: ptiger1$(exeext)
+
+.PHONY: ptiger
+
+# Driver
+
+GCCPTIGER_OBJS = \
+   $(GCC_OBJS) \
+   ptiger/ptigerspec.o \
+   $(END)
+
+gccptiger$(exeext): $(GCCPTIGER_OBJS) $(EXTRA_GCC_OBJS) libcommon-target.a $(LIBDEPS)
+	+$(LINKER) $(ALL_LINKERFLAGS) $(LDFLAGS) -o $@ \
+	  $(GCCPTIGER_OBJS) $(EXTRA_GCC_OBJS) libcommon-target.a \
+	  $(EXTRA_GCC_LIBS) $(LIBS)
+
+# The compiler proper
+
+ptiger_OBJS = \
+    ptiger/ptiger1.o \
+    ptiger/ptiger-token.o\
+    ptiger/ptiger-lexer.o\
+    $(END)
+
+ptiger1$(exeext): attribs.o $(ptiger_OBJS) $(BACKEND) $(LIBDEPS)
+	+$(LLINKER) $(ALL_LINKERFLAGS) $(LDFLAGS) -o $@ \
+	      attribs.o $(ptiger_OBJS) $(BACKEND) $(LIBS) $(BACKENDLIBS)
+
+ptiger.all.cross:
+
+ptiger.start.encap: gccptiger$(exeext)
+ptiger.rest.encap:
+
+ptiger.install-common: installdirs
+	-rm -f $(DESTDIR)$(bindir)/$(GCCPTIGER_INSTALL_NAME)$(exeext)
+	$(INSTALL_PROGRAM) gccptiger$(exeext) $(DESTDIR)$(bindir)/$(GCCPTIGER_INSTALL_NAME)$(exeext)
+	rm -f $(DESTDIR)$(bindir)/$(GCCPTIGER_TARGET_INSTALL_NAME)$(exeext); \
+	( cd $(DESTDIR)$(bindir) && \
+      $(LN) $(GCCPTIGER_INSTALL_NAME)$(exeext) $(GCCPTIGER_TARGET_INSTALL_NAME)$(exeext) ); \
+
+# Required goals, they still do nothing
+ptiger.install-man:
+ptiger.install-info:
+ptiger.install-pdf:
+ptiger.install-plugin:
+ptiger.install-html:
+ptiger.info:
+ptiger.dvi:
+ptiger.pdf:
+ptiger.html:
+ptiger.man:
+ptiger.mostlyclean:
+ptiger.clean:
+ptiger.distclean:
+ptiger.maintainer-clean:
+
+# make uninstall
+ptiger.uninstall:
+	-rm -f gccptiger$(exeext) ptiger1$(exeext)
+	-rm -f $(ptiger_OBJS)
+
+# Used for handling bootstrap
+ptiger.stage1: stage1-start
+	-mv ptiger/*$(objext) stage1/ptiger
+ptiger.stage2: stage2-start
+	-mv ptiger/*$(objext) stage2/ptiger
+ptiger.stage3: stage3-start
+	-mv ptiger/*$(objext) stage3/ptiger
+ptiger.stage4: stage4-start
+	-mv ptiger/*$(objext) stage4/ptiger
+ptiger.stageprofile: stageprofile-start
+	-mv ptiger/*$(objext) stageprofile/ptiger
+ptiger.stagefeedback: stagefeedback-start
+	-mv ptiger/*$(objext) stagefeedback/ptiger
