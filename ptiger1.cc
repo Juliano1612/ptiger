@@ -14,7 +14,7 @@
 #include "langhooks.h"
 #include "langhooks-def.h"
 #include "common/common-target.h"
-#include "ptiger-lexer.h"
+#include "ptiger-parser.h"
 
 /* Language-dependent contents of a type.  */
 
@@ -83,7 +83,7 @@ ptiger_langhook_type_for_size (unsigned int bits ATTRIBUTE_UNUSED,
   return NULL;
 }
 
-static void ptiger_parse_file (const char *filename){
+/*static void ptiger_parse_file (const char *filename){
 	FILE *file = fopen(filename, "r");
 	if (file == NULL){
 		fatal_error (UNKNOWN_LOCATION, "cannot open filename %s: %m", filename);
@@ -119,13 +119,11 @@ static void ptiger_parse_files(int num_files, const char **files){
 	for(int i = 0; i < num_files; i++){
 		ptiger_parse_file(files[i]);
 	}
-}
+}*/
 
 static void
-ptiger_langhook_parse_file (void)
-{
-  //fprintf(stderr, "Hello gccptiger!\n");
-  ptiger_parse_files(num_in_fnames, in_fnames);
+ptiger_langhook_parse_file (void){
+  ptiger_parse_files (num_in_fnames, in_fnames);
 }
 
 
