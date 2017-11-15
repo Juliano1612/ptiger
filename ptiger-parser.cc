@@ -75,6 +75,8 @@ namespace Ptiger{
     bool done_end ();
     bool done_in();
     bool done_end_let();
+    bool done_end_function();
+
     //bool done_end_or_else ();
     bool done_endif_or_else ();
     bool done_endif ();
@@ -116,6 +118,7 @@ namespace Ptiger{
 
     Tree parse_variable_declaration ();
     Tree parse_type_declaration ();
+    Tree parse_function_declaration();
 
     Tree parse_type ();
     /*Tree parse_record ();
@@ -245,6 +248,11 @@ namespace Ptiger{
     return (t->get_id () == Ptiger::END);
   }
 
+  bool Parser::done_end_function(){
+    const_TokenPtr t = lexer.peek_token ();
+    return (t->get_id () == Ptiger::VAR || t->get_id () == Ptiger::TYPE || t->get_id () == Ptiger::FUNCTION || t->get_id () == Ptiger::IN );
+  }
+
   /*bool Parser::done_end_or_else (){
     const_TokenPtr t = lexer.peek_token ();
     return (t->get_id () == Ptiger::END || t->get_id () == Ptiger::ELSE || t->get_id () == Ptiger::END_OF_FILE);
@@ -322,6 +330,8 @@ namespace Ptiger{
     switch (t->get_id()) {
       case Ptiger::VAR:
         return parse_variable_declaration();
+      case Ptiger::FUNCTION:
+        return parse_function_declaration();
       default:
         unexpected_token (t);
         skip_after_end ();
@@ -378,6 +388,69 @@ namespace Ptiger{
       }
 
     gcc_unreachable ();
+  }
+
+  Tree build_function(const_TokenPtr funcid){
+    Tree param_list = NULL_TREE;
+    Tree param_type_list = tree_cons(NULL_TREE, void_type_node, NULL_TREE);
+    Tree fntype = build_function_type(void_type_node, param_type_list);
+    Tree fndecl = build_decl(FUNCTION_DECL, get_identifier(funcid->get_str()), fntype);
+    /*DECL_EXTERNAL(fndecl) = 0;
+    TREE_PUBLIC(fndecl) = 1;
+    DECL_ARGUMENTS(fndecl) = param_list;
+    DECL_RESULT(fndecl) = build_decl(RESULT_DECL, NULL_TREE, void_type_node);
+    DECL_CONTEXT( DECL_RESULT( fndecl)) = fndecl;
+    rest_of_decl_compilation (fndecl, NULL_PTR, 1, 0);
+    DECL_SOURCE_FILE( fndecl) = input_filename;
+    DECL_SOURCE_LINE( fndecl) = 1;
+    announce_function( fndecl);
+    current_function_decl = fndecl;
+    DECL_INITIAL( fndecl) = error_mark_node;
+    temporary_allocation();
+    pushlevel(0);
+    make_function_rtl( fndecl);
+    init_function_start(fndecl, input_filename, 1);*/
+
+  }
+
+  Tree Parser::parse_function_declaration(){
+    if(!skip_token(Ptiger::FUNCTION)){
+      skip_after_end ();
+      return Tree::error ();
+    }
+    enter_scope();
+    const_TokenPtr identifier = expect_token (Ptiger::ID);
+    if (identifier == NULL){
+        skip_after_end ();
+        return Tree::error ();
+    }
+    if(!skip_token(Ptiger::LPARENTESIS)){
+      skip_after_end ();
+      return Tree::error ();
+    }
+    if(skip_token(Ptiger::RPARENTESIS)){
+      Tree param_list = NULL_TREE;
+    }else{
+      //parsa parametros
+      if(!skip_token(Ptiger::RPARENTESIS)){
+        skip_after_end ();
+        return Tree::error ();
+      }
+    }
+
+    if(!skip_token(Ptiger::COLON)){
+      skip_after_end ();
+      return Tree::error ();
+    }
+    Tree type_tree = parse_type ();
+    if (type_tree.is_error ()){
+        skip_after_end();
+        return Tree::error ();
+    }
+    skip_token(Ptiger::EQUAL);
+    //skip_token(Ptiger::LPARENTESIS);
+    parse_expression_seq(&Parser::done_end_function);
+    return build_function();
   }
 
   Tree Parser::parse_variable_declaration (){
