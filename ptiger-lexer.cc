@@ -202,8 +202,13 @@ TokenPtr Lexer::build_token (){
             opencomment--;
           }
         }else{
-          skip_input();
-          current_column++;
+          if(current_char == '\n'){
+            current_line++;
+            current_column = 1;
+          }else{
+            current_column++;
+          }
+          skip_input();          
         }
         if(current_char == EOF){
           return Token::make(END_OF_FILE, loc);
