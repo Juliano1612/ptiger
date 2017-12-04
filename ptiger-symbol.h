@@ -13,11 +13,13 @@
 namespace Ptiger
 {
 
-enum /* class */ SymbolKind
-{
+enum SymbolKind{
   INVALID,
   VARIABLE,
-  TYPENAME
+  TYPENAME,
+  ARRAYI,
+  ARRAYR,
+  ARRAYS
 };
 
 struct Symbol
@@ -40,11 +42,26 @@ public:
     return name;
   }
 
-  void
-  set_tree_decl (Tree decl_)
-  {
+  void set_tree_decl (Tree decl_){
+    switch (kind) {
+      case Ptiger::TYPENAME:
+        printf("TYPE_DECL kind\n");
+        break;
+      case Ptiger::ARRAYI:
+        printf("Array int kind\n");
+        break;
+      case Ptiger::ARRAYR:
+        printf("Array real kind\n");
+        break;
+      case Ptiger::ARRAYS:
+        printf("Array string kind\n");
+        break;
+    }
     gcc_assert ((kind == VARIABLE && decl_.get_tree_code() == VAR_DECL)
-                    || (kind == TYPENAME && decl_.get_tree_code() == TYPE_DECL));
+             || (kind == TYPENAME && decl_.get_tree_code() == TYPE_DECL)
+             || (kind == ARRAYI && decl_.get_tree_code() == TYPE_DECL)
+             || (kind == ARRAYR && decl_.get_tree_code() == TYPE_DECL)
+             || (kind == ARRAYS && decl_.get_tree_code() == TYPE_DECL));
     decl = decl_;
   }
 
