@@ -583,123 +583,166 @@ namespace Ptiger{
         skip_after_end ();
         return Tree::error ();
       }
-    if (!skip_token (Ptiger::EQUAL)){
-        skip_after_end ();
-        return Tree::error ();
+
+    const_TokenPtr e = lexer.peek_token();
+    printf("Parsando TYPE normal\n");
+    if(e->get_id() == Ptiger::COLON){
+
+      if (!skip_token (Ptiger::COLON)){
+       skip_after_end ();
+       return Tree::error ();
+     }
+     Tree type_tree = parse_type ();
+
+     if (type_tree.is_error ()){
+         skip_after_end();
+         return Tree::error ();
+       }
+
+     //skip_token (Ptiger::SEMICOLON);
+
+     if (scope.get_current_mapping ().get (identifier->get_str ())){
+         error_at (identifier->get_locus (),
+       "name '%s' already declared in this scope",
+       identifier->get_str ().c_str ());
       }
+     SymbolPtr sym (new Symbol (Ptiger::TYPENAME, identifier->get_str ()));
+     scope.get_current_mapping ().insert (sym);
 
-    const_TokenPtr t = lexer.peek_token();
-    if(t->get_id() == Ptiger::LBRACKETS){
-      printf("ACHEI UMA DECLARAÇÃO DE TYPE RECORD\n");
+     Tree decl = build_decl (identifier->get_locus (), TYPE_DECL,
+           get_identifier (sym->get_name ().c_str ()),
+           type_tree.get_tree ());
+     DECL_CONTEXT (decl.get_tree()) = main_fndecl;
 
-      Tree type_tree = parse_type_record ();
-      if (type_tree.is_error ()){
-          skip_after_end();
+     gcc_assert (!stack_var_decl_chain.empty ());
+     stack_var_decl_chain.back ().append (decl);
+
+     sym->set_tree_decl (decl);
+
+     Tree stmt = build_tree (DECL_EXPR, identifier->get_locus (), void_type_node, decl);
+
+    return stmt;
+
+    }else{
+      if (!skip_token (Ptiger::EQUAL)){
+          skip_after_end ();
           return Tree::error ();
         }
-      //skip_token (Ptiger::SEMICOLON);
-      if (scope.get_current_mapping ().get (identifier->get_str ())){
+
+      const_TokenPtr t = lexer.peek_token();
+      if(t->get_id() == Ptiger::LBRACKETS){
+        printf("ACHEI UMA DECLARAÇÃO DE TYPE RECORD\n");
+
+        Tree type_tree = parse_type_record ();
+        if (type_tree.is_error ()){
+            skip_after_end();
+            return Tree::error ();
+          }
+        //skip_token (Ptiger::SEMICOLON);
+        if (scope.get_current_mapping ().get (identifier->get_str ())){
+            error_at (identifier->get_locus (),
+          "name '%s' already declared in this scope",
+          identifier->get_str ().c_str ());
+        }
+        SymbolPtr sym (new Symbol (Ptiger::TYPENAME, identifier->get_str ()));
+        scope.get_current_mapping ().insert (sym);
+        Tree decl = build_decl (identifier->get_locus (), TYPE_DECL,
+              get_identifier (sym->get_name ().c_str ()),
+              type_tree.get_tree ());
+        DECL_CONTEXT (decl.get_tree()) = main_fndecl;
+        gcc_assert (!stack_var_decl_chain.empty ());
+        stack_var_decl_chain.back ().append (decl);
+        sym->set_tree_decl (decl);
+
+        Tree stmt = build_tree (DECL_EXPR, identifier->get_locus (), void_type_node, decl);
+        return stmt;
+      }else if(t->get_id() == Ptiger::ARRAY){
+        printf("ACHEI UMA DECLARAÇÃO DE TYPE ARRAY\n");
+        skip_token(Ptiger::ARRAY);
+        printf("PARSEI PTIGER::ARRAY\n");
+        skip_token(Ptiger::OF);
+        printf("PARSEI PTIGER::OF\n");
+
+        if (scope.get_current_mapping ().get (identifier->get_str ())){
           error_at (identifier->get_locus (),
-    		"name '%s' already declared in this scope",
-    		identifier->get_str ().c_str ());
-      }
-      SymbolPtr sym (new Symbol (Ptiger::TYPENAME, identifier->get_str ()));
-      scope.get_current_mapping ().insert (sym);
-      Tree decl = build_decl (identifier->get_locus (), TYPE_DECL,
-    			  get_identifier (sym->get_name ().c_str ()),
-    			  type_tree.get_tree ());
-      DECL_CONTEXT (decl.get_tree()) = main_fndecl;
-      gcc_assert (!stack_var_decl_chain.empty ());
-      stack_var_decl_chain.back ().append (decl);
-      sym->set_tree_decl (decl);
-
-      Tree stmt = build_tree (DECL_EXPR, identifier->get_locus (), void_type_node, decl);
-      return stmt;
-    }else if(t->get_id() == Ptiger::ARRAY){
-      printf("ACHEI UMA DECLARAÇÃO DE TYPE ARRAY\n");
-      skip_token(Ptiger::ARRAY);
-      printf("PARSEI PTIGER::ARRAY\n");
-      skip_token(Ptiger::OF);
-      printf("PARSEI PTIGER::OF\n");
-
-      if (scope.get_current_mapping ().get (identifier->get_str ())){
-        error_at (identifier->get_locus (),
-  		  "type '%s' already declared in this scope",
-  		  identifier->get_str ().c_str ());
-      }
-      t = lexer.peek_token();
-      if(t->get_id() == Ptiger::INT){
-        SymbolPtr sym (new Symbol (Ptiger::ARRAYI, identifier->get_str ()));
-        printf("PARSANDO tipo do type [int] %s\n", identifier->get_str().c_str());
-        Tree type_tree = parse_type ();
-        printf("acabou o tipo do type[int]\n");
-        if (type_tree.is_error ()){
-          skip_after_end();
-          return Tree::error ();
+          "type '%s' already declared in this scope",
+          identifier->get_str ().c_str ());
         }
-        scope.get_current_mapping ().insert (sym);
+        t = lexer.peek_token();
+        if(t->get_id() == Ptiger::INT){
+          SymbolPtr sym (new Symbol (Ptiger::ARRAYI, identifier->get_str ()));
+          printf("PARSANDO tipo do type [int] %s\n", identifier->get_str().c_str());
+          Tree type_tree = parse_type ();
+          printf("acabou o tipo do type[int]\n");
+          if (type_tree.is_error ()){
+            skip_after_end();
+            return Tree::error ();
+          }
+          scope.get_current_mapping ().insert (sym);
 
-        Tree decl = build_decl (identifier->get_locus (), TYPE_DECL,
-      			  get_identifier (sym->get_name ().c_str ()),
-      			  type_tree.get_tree ());
-        DECL_CONTEXT (decl.get_tree()) = main_fndecl;
+          Tree decl = build_decl (identifier->get_locus (), TYPE_DECL,
+                get_identifier (sym->get_name ().c_str ()),
+                type_tree.get_tree ());
+          DECL_CONTEXT (decl.get_tree()) = main_fndecl;
 
-        gcc_assert (!stack_var_decl_chain.empty ());
-        stack_var_decl_chain.back ().append (decl);
+          gcc_assert (!stack_var_decl_chain.empty ());
+          stack_var_decl_chain.back ().append (decl);
 
-        sym->set_tree_decl (decl);
+          sym->set_tree_decl (decl);
 
-        Tree stmt = build_tree (DECL_EXPR, identifier->get_locus (), void_type_node, decl);
-        printf("ACABEI DE PARSAR O TYPE\n");
-        return stmt;
-      }
-      else if(t->get_id() == Ptiger::REAL){
-        SymbolPtr sym (new Symbol (Ptiger::ARRAYR, identifier->get_str ()));
-        Tree type_tree = parse_type ();
-        if (type_tree.is_error ()){
-          skip_after_end();
-          return Tree::error ();
+          Tree stmt = build_tree (DECL_EXPR, identifier->get_locus (), void_type_node, decl);
+          printf("ACABEI DE PARSAR O TYPE\n");
+          return stmt;
         }
-        scope.get_current_mapping ().insert (sym);
+        else if(t->get_id() == Ptiger::REAL){
+          SymbolPtr sym (new Symbol (Ptiger::ARRAYR, identifier->get_str ()));
+          Tree type_tree = parse_type ();
+          if (type_tree.is_error ()){
+            skip_after_end();
+            return Tree::error ();
+          }
+          scope.get_current_mapping ().insert (sym);
 
-        Tree decl = build_decl (identifier->get_locus (), TYPE_DECL,
-      			  get_identifier (sym->get_name ().c_str ()),
-      			  type_tree.get_tree ());
-        DECL_CONTEXT (decl.get_tree()) = main_fndecl;
+          Tree decl = build_decl (identifier->get_locus (), TYPE_DECL,
+                get_identifier (sym->get_name ().c_str ()),
+                type_tree.get_tree ());
+          DECL_CONTEXT (decl.get_tree()) = main_fndecl;
 
-        gcc_assert (!stack_var_decl_chain.empty ());
-        stack_var_decl_chain.back ().append (decl);
+          gcc_assert (!stack_var_decl_chain.empty ());
+          stack_var_decl_chain.back ().append (decl);
 
-        sym->set_tree_decl (decl);
+          sym->set_tree_decl (decl);
 
-        Tree stmt = build_tree (DECL_EXPR, identifier->get_locus (), void_type_node, decl);
-        return stmt;
-      }
-      else if(t->get_id() == Ptiger::STRING){
-        SymbolPtr sym (new Symbol (Ptiger::ARRAYS, identifier->get_str ()));
-        Tree type_tree = parse_type ();
-        if (type_tree.is_error ()){
-          skip_after_end();
-          return Tree::error ();
+          Tree stmt = build_tree (DECL_EXPR, identifier->get_locus (), void_type_node, decl);
+          return stmt;
         }
-        scope.get_current_mapping ().insert (sym);
+        else if(t->get_id() == Ptiger::STRING){
+          SymbolPtr sym (new Symbol (Ptiger::ARRAYS, identifier->get_str ()));
+          Tree type_tree = parse_type ();
+          if (type_tree.is_error ()){
+            skip_after_end();
+            return Tree::error ();
+          }
+          scope.get_current_mapping ().insert (sym);
 
-        Tree decl = build_decl (identifier->get_locus (), TYPE_DECL,
-      			  get_identifier (sym->get_name ().c_str ()),
-      			  type_tree.get_tree ());
-        DECL_CONTEXT (decl.get_tree()) = main_fndecl;
+          Tree decl = build_decl (identifier->get_locus (), TYPE_DECL,
+                get_identifier (sym->get_name ().c_str ()),
+                type_tree.get_tree ());
+          DECL_CONTEXT (decl.get_tree()) = main_fndecl;
 
-        gcc_assert (!stack_var_decl_chain.empty ());
-        stack_var_decl_chain.back ().append (decl);
+          gcc_assert (!stack_var_decl_chain.empty ());
+          stack_var_decl_chain.back ().append (decl);
 
-        sym->set_tree_decl (decl);
+          sym->set_tree_decl (decl);
 
-        Tree stmt = build_tree (DECL_EXPR, identifier->get_locus (), void_type_node, decl);
-        return stmt;
+          Tree stmt = build_tree (DECL_EXPR, identifier->get_locus (), void_type_node, decl);
+          return stmt;
+        }
       }
+      return Tree::error();
     }
-    return Tree::error();
   }
+
   /*Tree Parser::parse_type_declaration (){
     // type_declaration -> "type" identifier ":" type ";"
     if (!skip_token (Ptiger::TYPE)){
@@ -847,19 +890,17 @@ namespace Ptiger{
     std::vector<std::string> field_names;
 
     const_TokenPtr next = lexer.peek_token ();
-    while (next->get_id () != Ptiger::RBRACKETS)
-      {
+    while (next->get_id () != Ptiger::RBRACKETS){
         Tree field_decl = parse_field_declaration (field_names);
 
-        if (!field_decl.is_error ())
-  	{
-  	  DECL_CONTEXT (field_decl.get_tree ()) = record_type.get_tree();
-  	  if (field_list.is_null ())
-  	    field_list = field_decl;
-  	  if (!field_last.is_null ())
-  	    TREE_CHAIN (field_last.get_tree ()) = field_decl.get_tree ();
-  	  field_last = field_decl;
-  	}
+        if (!field_decl.is_error ()){
+      	  DECL_CONTEXT (field_decl.get_tree ()) = record_type.get_tree();
+      	  if (field_list.is_null ())
+      	    field_list = field_decl;
+      	  if (!field_last.is_null ())
+      	    TREE_CHAIN (field_last.get_tree ()) = field_decl.get_tree ();
+      	  field_last = field_decl;
+	      }
         next = lexer.peek_token ();
       }
 
@@ -884,19 +925,14 @@ namespace Ptiger{
       type = TREE_TYPE (s->get_tree_decl ().get_tree ());
       kind = s->get_kind();
     }
-
-    printf("DEBUG1\n");
     typedef std::vector<std::pair<Tree, Tree> > Dimensions;
     Dimensions dimensions;
     t = lexer.peek_token ();
     while (t->get_id () == Ptiger::LPARENTESIS || t->get_id () == Ptiger::LBRACE){
-      printf("DEBUG2\n");
       lexer.skip_token ();
       Tree lower_bound, upper_bound;
       if (t->get_id () == Ptiger::LBRACE){
     	  Tree size = parse_integer_expression ();
-        printf("PARSING SIZE\n");
-
     	  skip_token (Ptiger::RBRACE);
     	  lower_bound = Tree (build_int_cst_type (integer_type_node, 0), size.get_locus ());
     	  upper_bound = build_tree (MINUS_EXPR, size.get_locus (), integer_type_node, size, build_int_cst (integer_type_node, 1));
@@ -912,10 +948,7 @@ namespace Ptiger{
       dimensions.push_back (std::make_pair (lower_bound, upper_bound));
       t = lexer.peek_token ();
     }
-    printf("DEBUG3\n");
-
     for (Dimensions::reverse_iterator it = dimensions.rbegin (); it != dimensions.rend (); it++){
-        printf("DIMENSIONS\n");
         it->first = Tree (fold (it->first.get_tree ()), it->first.get_locus ());
 
         it->second = Tree (fold (it->second.get_tree ()), it->second.get_locus ());
@@ -925,7 +958,6 @@ namespace Ptiger{
       	  type = build_array_type (type.get_tree (), range_type.get_tree ());
   	    }
       }
-      printf("DEBUG4\n");
     return type;
   }
 
@@ -1074,20 +1106,6 @@ namespace Ptiger{
     if (sym == NULL){
         error_at (loc, "type '%s' not declared in the current scope", name.c_str ());
     }else if (sym->get_kind () != Ptiger::TYPENAME && sym->get_kind () != Ptiger::ARRAYI && sym->get_kind () != Ptiger::ARRAYR && sym->get_kind () != Ptiger::ARRAYS){
-      switch (sym->get_kind()) {
-        case Ptiger::TYPENAME:
-          printf("TYPE_DECL kind\n");
-          break;
-        case Ptiger::ARRAYI:
-          printf("Array int kind\n");
-          break;
-        case Ptiger::ARRAYR:
-          printf("Array real kind\n");
-          break;
-        case Ptiger::ARRAYS:
-          printf("Array string kind\n");
-          break;
-      }
         error_at (loc, "name '%s' is not a type", name.c_str ());
         sym = SymbolPtr();
     }
