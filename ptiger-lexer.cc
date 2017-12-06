@@ -103,7 +103,7 @@ TokenPtr Lexer::build_token (){
 	  continue;
 	case '\t':
 	  // Width of a tab is not well defined, let's assume 8 for now
-	  current_column += 8;
+	  current_column += 1;
 	  continue;
 
 	// ***************
@@ -208,7 +208,7 @@ TokenPtr Lexer::build_token (){
           }else{
             current_column++;
           }
-          skip_input();          
+          skip_input();
         }
         if(current_char == EOF){
           return Token::make(END_OF_FILE, loc);

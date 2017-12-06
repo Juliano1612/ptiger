@@ -28,6 +28,8 @@ ptiger_OBJS = \
     ptiger/ptiger-symbol-mapping.o \
     ptiger/ptiger-scope.o \
     ptiger/ptiger-convert.o \
+    ptiger/ptiger-func.o \
+    ptiger/ptiger-func-mapping.o \
     $(END)
 
 ptiger1$(exeext): attribs.o $(ptiger_OBJS) $(BACKEND) $(LIBDEPS)

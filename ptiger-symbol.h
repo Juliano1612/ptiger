@@ -43,20 +43,6 @@ public:
   }
 
   void set_tree_decl (Tree decl_){
-    switch (kind) {
-      case Ptiger::TYPENAME:
-        printf("TYPE_DECL kind\n");
-        break;
-      case Ptiger::ARRAYI:
-        printf("Array int kind\n");
-        break;
-      case Ptiger::ARRAYR:
-        printf("Array real kind\n");
-        break;
-      case Ptiger::ARRAYS:
-        printf("Array string kind\n");
-        break;
-    }
     gcc_assert ((kind == VARIABLE && decl_.get_tree_code() == VAR_DECL)
              || (kind == TYPENAME && decl_.get_tree_code() == TYPE_DECL)
              || (kind == ARRAYI && decl_.get_tree_code() == TYPE_DECL)
