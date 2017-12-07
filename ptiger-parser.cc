@@ -139,6 +139,7 @@ public:
 
         Tree parse_assignment_statement ();
         Tree parse_assignment_declaration (Tree var, const_TokenPtr assig_tok, bool isImplicit, Tree implicitExp);
+        Tree parse_assignment_declaration_record (Tree var, const_TokenPtr assig_tok);
 
         Tree parse_let_expression();
         Tree parse_if_expression ();
@@ -554,10 +555,10 @@ Tree Parser::parse_variable_declaration (){
                 stack_var_decl_chain.back ().append (decl);
                 sym->set_tree_decl (decl);
                 Tree stmt = build_tree (DECL_EXPR, identifier->get_locus (), void_type_node, decl);
-                if(isImplicit){
-                  get_current_stmt_list ().append (stmt);
-                  Tree assign_tree = parse_assignment_declaration(decl, assign_tok, true, expr);
-                  return assign_tree;
+                if(isImplicit) {
+                        get_current_stmt_list ().append (stmt);
+                        Tree assign_tree = parse_assignment_declaration(decl, assign_tok, true, expr);
+                        return assign_tree;
                 }
                 //get_current_stmt_list ().append (stmt);
 
@@ -589,20 +590,22 @@ Tree Parser::parse_variable_declaration (){
                 Tree stmt = build_tree (DECL_EXPR, identifier->get_locus (), void_type_node, decl);
 
                 get_current_stmt_list ().append (stmt);
-
                 const_TokenPtr assign_tok = lexer.peek_token();
+
+                Tree assign_tree;
                 skip_token(Ptiger::ASSIGN);
-                Tree assign_tree = parse_assignment_declaration(decl, assign_tok, false, NULL_TREE);
+                const_TokenPtr t = lexer.peek_token();
+                if(t->get_id() == Ptiger::LBRACKETS) {
+                        assign_tree = parse_assignment_declaration_record(decl, assign_tok);
+                }else{
+                        assign_tree = parse_assignment_declaration(decl, assign_tok, false, NULL_TREE);
+                }
                 if(assign_tree.is_error()) {
                         skip_after_end();
                         return Tree::error();
                 }
                 return assign_tree;
-
         }
-
-
-
         //return stmt;
 }
 
@@ -769,57 +772,6 @@ Tree Parser::parse_type_declaration (){
         }
 }
 
-/*Tree Parser::parse_type_declaration (){
-   // type_declaration -> "type" identifier ":" type ";"
-   if (!skip_token (Ptiger::TYPE)){
-      skip_after_end ();
-      return Tree::error ();
-    }
-   const_TokenPtr identifier = expect_token (Ptiger::ID);
-   if (identifier == NULL){
-      skip_after_end ();
-      return Tree::error ();
-    }
-   if (!skip_token (Ptiger::COLON)){
-      skip_after_end ();
-      return Tree::error ();
-    }
-
-   Tree type_tree = parse_type ();
-
-   if (type_tree.is_error ())
-    {
-      skip_after_end();
-      return Tree::error ();
-    }
-
-   skip_token (Ptiger::SEMICOLON);
-
-   if (scope.get_current_mapping ().get (identifier->get_str ()))
-    {
-      error_at (identifier->get_locus (),
-    "name '%s' already declared in this scope",
-    identifier->get_str ().c_str ());
-    }
-   SymbolPtr sym (new Symbol (Ptiger::TYPENAME, identifier->get_str ()));
-   scope.get_current_mapping ().insert (sym);
-
-   Tree decl = build_decl (identifier->get_locus (), TYPE_DECL,
-        get_identifier (sym->get_name ().c_str ()),
-        type_tree.get_tree ());
-   DECL_CONTEXT (decl.get_tree()) = main_fndecl;
-
-   gcc_assert (!stack_var_decl_chain.empty ());
-   stack_var_decl_chain.back ().append (decl);
-
-   sym->set_tree_decl (decl);
-
-   Tree stmt
-    = build_tree (DECL_EXPR, identifier->get_locus (), void_type_node, decl);
-
-   return stmt;
-   }*/
-
 namespace {
 bool is_string_type (Tree type){
         gcc_assert (TYPE_P (type.get_tree ()));
@@ -850,9 +802,6 @@ const char *Parser::print_type (Tree type){
         else if (type == float_type_node) {
                 return "float";
         }
-        /*else if (type == string_type_node){
-            return "string";
-           }*/
         else if (is_string_type (type)) {
                 return "string";
         }
@@ -875,7 +824,6 @@ Tree Parser::parse_field_declaration (std::vector<std::string> &field_names){
                 skip_after_end ();
                 return Tree::error ();
         }
-
         skip_token (Ptiger::COLON);
 
         Tree type = parse_type();
@@ -1007,11 +955,16 @@ Tree Parser::parse_type (){
                 lexer.skip_token ();
                 type = float_type_node;
                 break;
-        /*case Ptiger::STRING:
-           lexer.skip_token ();
-           type = string_type_node;
-           break;
-           case Ptiger::BOOL:
+        case Ptiger::STRING:
+                lexer.skip_token();
+                type = build_pointer_type(
+                        build_qualified_type(char_type_node,
+                                             TYPE_QUAL_CONST));
+                // if(type.get_tree_code() == POINTER_TYPE
+                //    && TYPE_MAIN_VARIANT(TREE_TYPE(type.get_tree())) == char_type_node)
+                // printf("Parsei um string node\n");
+                break;
+        /*case Ptiger::BOOL:
            lexer.skip_token ();
            type = boolean_type_node;
            break;*/
@@ -1163,45 +1116,23 @@ SymbolPtr Parser::query_integer_variable (const std::string &name, location_t lo
         return sym;
 }
 
-/*Tree Parser::parse_assignment_declaration(Tree var, const_TokenPtr assig_tok){
+Tree Parser::parse_assignment_declaration_record(Tree var, const_TokenPtr assig_tok){
         // assignment_statement -> expression ":=" expression ";"
-        const_TokenPtr t = lexer.peek_token();
-        if(t->get_id() == Ptiger::LBRACKETS) {
-                skip_token(Ptiger::LBRACKETS);
-                t = lexer.peek_token();
-                while(t->get_id() != Ptiger::RBRACKETS) {
-                        Tree variable = parse_lhs_assignment_expression ();
-                        if (variable.is_error ())
-                                return Tree::error ();
-                        const_TokenPtr assig_tok = expect_token (Ptiger::EQUAL);
-                        if (assig_tok == NULL) {
-                                skip_after_end ();
-                                return Tree::error ();
-                        }
-                        const_TokenPtr first_of_expr = lexer.peek_token ();
-                        Tree expr = parse_expression ();
-                        if (expr.is_error ())
-                                return Tree::error ();
-                        //skip_token (Ptiger::SEMICOLON);
-                        if (variable.get_type () != expr.get_type ()) {
-                                error_at (first_of_expr->get_locus (), "cannot assign value of type %s to a variable of type %s",print_type (expr.get_type ()),print_type (variable.get_type ()));
-                                return Tree::error ();
-                        }
-                        t = lexer.peek_token();
-                        if(t->get_id() == Ptiger::RBRACKETS)
-                                return build_tree (MODIFY_EXPR, assig_tok->get_locus (), void_type_node, variable, expr);
-                        else{
-                                skip_token(Ptiger::COMMA);
-                                get_current_stmt_list ().append (build_tree (MODIFY_EXPR, assig_tok->get_locus (), void_type_node, variable, expr));
-                        }
-                }
-        }else{
-                Tree variable = parse_expression_naming_variable_declaration (var);
+        const_TokenPtr t;
+        skip_token(Ptiger::LBRACKETS);
+        t = lexer.peek_token();
+        while(t->get_id() != Ptiger::RBRACKETS) {
+                Tree variable = parse_lhs_assignment_expression ();
                 if (variable.is_error ())
                         return Tree::error ();
-
+                const_TokenPtr assig_tok = expect_token (Ptiger::ASSIGN);
+                /*if (assig_tok == NULL) {
+                        skip_after_end ();
+                        return Tree::error ();
+                   }
+                   skip_token(Ptiger::EQUAL);*/
                 const_TokenPtr first_of_expr = lexer.peek_token ();
-                Tree expr = parse_expression_rbp (0);
+                Tree expr = parse_expression_rbp(0);
                 if (expr.is_error ())
                         return Tree::error ();
                 //skip_token (Ptiger::SEMICOLON);
@@ -1209,11 +1140,19 @@ SymbolPtr Parser::query_integer_variable (const std::string &name, location_t lo
                         error_at (first_of_expr->get_locus (), "cannot assign value of type %s to a variable of type %s",print_type (expr.get_type ()),print_type (variable.get_type ()));
                         return Tree::error ();
                 }
-                Tree assig_expr = build_tree (MODIFY_EXPR, assig_tok->get_locus (), void_type_node, variable, expr);
-                return assig_expr;
+                t = lexer.peek_token();
+                if(t->get_id() == Ptiger::RBRACKETS) {
+                        skip_token(Ptiger::RBRACKETS);
+                        return build_tree (MODIFY_EXPR, assig_tok->get_locus (), void_type_node, variable, expr);
+                }else{
+                        skip_token(Ptiger::COMMA);
+                        get_current_stmt_list ().append (build_tree (MODIFY_EXPR, assig_tok->get_locus (), void_type_node, variable, expr));
+                }
         }
+        skip_token(Ptiger::RBRACKETS);
+        return NULL_TREE;
 
-}*/
+}
 
 Tree Parser::parse_assignment_declaration(Tree var, const_TokenPtr assig_tok, bool isImplicit, Tree implicitExp) {
         // assignment_statement -> expression ":=" expression ";"
@@ -2133,6 +2072,7 @@ Tree Parser::binary_field_ref (const const_TokenPtr tok, Tree left) {
         return build_tree (COMPONENT_REF, tok->get_locus (),
                            TREE_TYPE (field_decl.get_tree ()), left, field_decl,
                            Tree ());
+
 }
 
 // This is invoked when a token (likely an operand) is found at a (likely
@@ -2200,19 +2140,23 @@ Tree Parser::parse_lhs_assignment_expression (){
 }
 
 void Parser::insert_external_library_functions(){
-        /*tree return_type;
-           std::list<Ptiger::Func::arg> argslist;
-           const std::string str;
+        Ptiger::Func::arg a;
 
-           tree return_type1 = void_type_node;
-           std::list<Ptiger::Func::arg> argslist1;
-           const std::string str1 = "print_hello_ptiger";
+        tree return_type1 = void_type_node;
 
-           FuncPtr func1(new Func(Ptiger::EXTERNAL, str1, return_type1, argslist1));
-           scope.get_current_mapping_fn().insert(func1);*/
+        a.arg_type = build_pointer_type(
+                build_qualified_type (char_type_node,
+                                      TYPE_QUAL_CONST));
+        a.expr = NULL_TREE;
+        std::list<Ptiger::Func::arg> argslist1;
+        argslist1.push_back(a);
+
+        const std::string str1 = "print";
+
+        FuncPtr func1(new Func(Ptiger::EXTERNAL, str1, return_type1, argslist1));
+        scope.get_current_mapping_fn().insert(func1);
 
         //void print_integer(int n)
-        Ptiger::Func::arg a;
         tree return_type2 = void_type_node;
 
         a.arg_type = integer_type_node;
@@ -2220,10 +2164,24 @@ void Parser::insert_external_library_functions(){
         std::list<Ptiger::Func::arg> argslist2;
         argslist2.push_back(a);
 
-        const std::string str2 = "print_i";
+        const std::string str2 = "printi";
 
         FuncPtr func2(new Func(Ptiger::EXTERNAL, str2, return_type2, argslist2));
         scope.get_current_mapping_fn().insert(func2);
+
+        //void print_integer(int n)
+        tree return_type3 = void_type_node;
+
+        a.arg_type = float_type_node;
+        a.expr = NULL_TREE;
+        std::list<Ptiger::Func::arg> argslist3;
+        argslist3.push_back(a);
+
+        const std::string str3 = "printr";
+
+        FuncPtr func3(new Func(Ptiger::EXTERNAL, str3, return_type3, argslist3));
+        scope.get_current_mapping_fn().insert(func3);
+
 
         // printf("ALL EXTERNAL FUNCTIONS LOADED\n");
 
