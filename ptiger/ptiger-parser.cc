@@ -1096,7 +1096,7 @@ SymbolPtr Parser::query_variable (const std::string &name, location_t loc){
         if (sym == NULL) {
                 error_at (loc, "variable '%s' not declared in the current scope",name.c_str ());
         }
-        else if (sym->get_kind () != Ptiger::VARIABLE) {
+        else if (sym->get_kind () != Ptiger::VARIABLE && sym->get_kind() != Ptiger::FORVARIABLE) {
                 error_at (loc, "name '%s' is not a variable", name.c_str ());
                 sym = SymbolPtr();
         }
@@ -1477,13 +1477,18 @@ Tree Parser::parse_for_declaration_expression(const_TokenPtr identifier) {
         //       return Tree::error();
         // }
 
+        std::string name;
+
         if (scope.get_current_mapping().get(identifier->get_str())) {
-                error_at(identifier->get_locus(),
-                         "name '%s' already declared in this scope",
-                         identifier->get_str().c_str());
+                SymbolPtr idsym = scope.lookup(identifier->get_str());
+                if(idsym->get_kind() != NULL && idsym->get_kind() != Ptiger::FORVARIABLE) {
+                        error_at(identifier->get_locus(),
+                                 "name '%s' already declared in this scope",
+                                 identifier->get_str().c_str());
+                }
         }
 
-        SymbolPtr sym(new Symbol(Ptiger::VARIABLE, identifier->get_str()));
+        SymbolPtr sym(new Symbol(Ptiger::FORVARIABLE, identifier->get_str()));
         scope.get_current_mapping().insert(sym);
 
         Tree decl = build_decl(identifier->get_locus(), VAR_DECL,

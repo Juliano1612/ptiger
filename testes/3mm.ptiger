@@ -29,33 +29,33 @@ in
     printline();
     print("Realizando E = A * B...");
 
-    for q := 0 to size-1 do
-      for w := 0 to size-1 do
-        for r := 0 to size do
-          e[q][w] := e[q][w] + a[q][r] * b[r][w];
+    for i := 0 to size-1 do
+      for j := 0 to size-1 do
+        for k := 0 to size do
+          e[i][j] := e[i][j] + a[i][k] * b[k][j];
 
     printline();
     print("Realizando F = C * D...");
 
-    for s := 0 to size-1 do
-      for h := 0 to size-1 do
-        for l := 0 to size-1 do
-          f[s][h] := f[s][h] + c[s][l] * d[l][h];
+    for i := 0 to size-1 do
+      for j := 0 to size-1 do
+        for k := 0 to size-1 do
+          f[i][j] := f[i][j] + c[i][k] * d[k][j];
 
     printline();
     print("Realizando G = E * F...");
 
-    for z := 0 to size-1 do
-      for x := 0 to size-1 do
-        for v := 0 to size-1 do
-          g[z][x] := g[z][x] + e[z][v] * f[v][x];
+    for i := 0 to size-1 do
+      for j := 0 to size-1 do
+        for k := 0 to size-1 do
+          g[i][j] := g[i][j] + e[i][k] * f[k][j];
 
     printline();
     printline();
 
-    for p := 0 to size-1 do(
-      for o := 0 to size-1 do(
-        printr(g[p][o]);
+    for i := 0 to size-1 do(
+      for j := 0 to size-1 do(
+        printr(g[i][j]);
         print(" ")
       );
       printline();

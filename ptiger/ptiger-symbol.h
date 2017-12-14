@@ -16,6 +16,7 @@ namespace Ptiger
 enum SymbolKind{
   INVALID,
   VARIABLE,
+  FORVARIABLE,
   TYPENAME,
   ARRAYI,
   ARRAYR,
@@ -43,7 +44,7 @@ public:
   }
 
   void set_tree_decl (Tree decl_){
-    gcc_assert ((kind == VARIABLE && decl_.get_tree_code() == VAR_DECL)
+    gcc_assert (( (kind == VARIABLE || kind == FORVARIABLE ) && decl_.get_tree_code() == VAR_DECL)
              || (kind == TYPENAME && decl_.get_tree_code() == TYPE_DECL)
              || (kind == ARRAYI && decl_.get_tree_code() == TYPE_DECL)
              || (kind == ARRAYR && decl_.get_tree_code() == TYPE_DECL)
