@@ -252,7 +252,7 @@ void Parser::parse_program(){
 
 bool Parser::done_parenthesis() {
         const_TokenPtr t = lexer.peek_token();
-        return (t->get_id() == Ptiger::RPARENTESIS || t->get_id() == Ptiger::END);
+        return (t->get_id() == Ptiger::RPARENTESIS || t->get_id() == Ptiger::END || t->get_id() == Ptiger::END_OF_FILE);
 }
 
 bool Parser::done_end_of_file(){
@@ -272,7 +272,7 @@ bool Parser::done_end_let(){
 
 bool Parser::done_end_function(){
         const_TokenPtr t = lexer.peek_token ();
-        return (t->get_id () == Ptiger::VAR || t->get_id () == Ptiger::TYPE || t->get_id () == Ptiger::FUNCTION || t->get_id () == Ptiger::IN );
+        return (t->get_id () == Ptiger::VAR || t->get_id () == Ptiger::TYPE || t->get_id () == Ptiger::FUNCTION || t->get_id () == Ptiger::IN  || t->get_id() == Ptiger::END_OF_FILE);
 }
 
 /*bool Parser::done_end_or_else (){
@@ -282,17 +282,17 @@ bool Parser::done_end_function(){
 
 bool Parser::done_else (){
         const_TokenPtr t = lexer.peek_token ();
-        return (t->get_id () == Ptiger::ELSE || t->get_id () == Ptiger::RPARENTESIS);
+        return (t->get_id () == Ptiger::ELSE || t->get_id () == Ptiger::RPARENTESIS  || t->get_id() == Ptiger::END_OF_FILE);
 }
 
 bool Parser::done_expseq (){
         const_TokenPtr t = lexer.peek_token ();
-        return (t->get_id () == Ptiger::END || t->get_id () == Ptiger::RPARENTESIS);
+        return (t->get_id () == Ptiger::END || t->get_id () == Ptiger::RPARENTESIS  || t->get_id() == Ptiger::END_OF_FILE);
 }
 
 bool Parser::done_in (){
         const_TokenPtr t = lexer.peek_token ();
-        return (t->get_id () == Ptiger::IN );
+        return (t->get_id () == Ptiger::IN  || t->get_id() == Ptiger::END_OF_FILE);
 }
 
 void Parser::parse_expression_seq_in (bool (Parser::*done)()){
@@ -2181,6 +2181,16 @@ void Parser::insert_external_library_functions(){
 
         FuncPtr func3(new Func(Ptiger::EXTERNAL, str3, return_type3, argslist3));
         scope.get_current_mapping_fn().insert(func3);
+
+        //void print_integer(int n)
+        tree return_type4 = void_type_node;
+
+        std::list<Ptiger::Func::arg> argslist4;
+
+        const std::string str4 = "printline";
+
+        FuncPtr func4(new Func(Ptiger::EXTERNAL, str4, return_type4, argslist4));
+        scope.get_current_mapping_fn().insert(func4);
 
 
         // printf("ALL EXTERNAL FUNCTIONS LOADED\n");
