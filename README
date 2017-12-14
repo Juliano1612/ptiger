@@ -1,0 +1,11 @@
+*********************************************************
+*	Front-end da linguagem Tiger para o GCC		*
+*********************************************************
+** 	Aluno: Juliano Cézar Chagas Tavares	       **
+**	Curso: Ciência da Computação - 2017	       **
+*********************************************************
+Compilando a biblioteca:
+	g++ -fPIC -shared lib.c -o libptiger.so
+
+Executando um código
+	gccptiger -L. -o a.out program.ptiger -lptiger
