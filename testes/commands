@@ -1,0 +1,2 @@
+g++ -fPIC -shared lib.c -o libptiger.so
+gccptiger -L. -o test  test.ptiger -lptiger

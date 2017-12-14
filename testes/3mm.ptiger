@@ -1,0 +1,66 @@
+let
+  var size := 8
+  type realArray = array of real
+
+  var a := realArray[8][8]
+  var b := realArray[8][8]
+  var c := realArray[8][8]
+  var d := realArray[8][8]
+  var e := realArray[8][8]
+  var f := realArray[8][8]
+  var g := realArray[8][8]
+
+in
+  print("Inicializando matrizes A, B, C, D, E, F e G... Size = ");
+  printi(size);
+  printline();
+  for i := 0 to size-1 do
+    for j := 0 to size-1 do(
+      a[i][j] := (i*j/size)+1.0;
+      b[i][j] := ((i*(j+1))/size)+1.0;
+      c[i][j] := ((i*(j+3))/size)+1.0;
+      d[i][j] := ((i*(j+2))/size)+1.0;
+      e[i][j] := 0.0;
+      f[i][j] := 0.0;
+      g[i][j] := 0.0;
+    );
+    print("Matrizes Inicializadas");
+    printline();
+    printline();
+    print("Realizando E = A * B...");
+
+    for q := 0 to size-1 do
+      for w := 0 to size-1 do
+        for r := 0 to size do
+          e[q][w] := e[q][w] + a[q][r] * b[r][w];
+
+    printline();
+    print("Realizando F = C * D...");
+
+    for s := 0 to size-1 do
+      for h := 0 to size-1 do
+        for l := 0 to size-1 do
+          f[s][h] := f[s][h] + c[s][l] * d[l][h];
+
+    printline();
+    print("Realizando G = E * F...");
+
+    for z := 0 to size-1 do
+      for x := 0 to size-1 do
+        for v := 0 to size-1 do
+          g[z][x] := g[z][x] + e[z][v] * f[v][x];
+
+    printline();
+    printline();
+
+    for p := 0 to size-1 do(
+      for o := 0 to size-1 do(
+        printr(g[p][o]);
+        print(" ")
+      );
+      printline();
+    )
+
+
+
+end

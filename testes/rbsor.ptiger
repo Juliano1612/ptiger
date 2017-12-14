@@ -1,0 +1,55 @@
+let
+
+  var size := 10
+  var x:int := 0
+  var y:int := 0
+  var m:int := 0
+  var mod   := 0
+  var rest  := 0
+  var fator := 2.0
+  var j := 0
+
+  type myArray = array of real
+
+  var t := myArray[10][10]
+
+in
+
+  for a := 0 to size-1 do
+    for b := 0 to size-1 do
+      t[a][b] := a+b+1.0;
+
+  for i := 1 to size-2 do(
+    x := i;
+    y := 2;
+    m := x/2;
+    rest := m * y;
+    mod := x - rest;
+    j := 2 - mod;
+    while j < size - 2 do(
+      t[i][j] := ((t[i-1][j] + t[i+1][j] + t[i][j+1] + t[i][j-1])/4)*fator;
+      j := j + 2
+    )
+  );
+  for k := 1 to size-2 do(
+    x := k;
+    y := 2;
+    m := x/2;
+    rest := m * y;
+    mod := x - rest;
+    j := 1 + mod;
+    while j < size - 2 do(
+      t[k][j] := ((t[k-1][j] + t[k+1][j] + t[k][j+1] + t[k][j-1])/4)*fator;
+      j := j + 2
+    )
+  );
+
+  for p := 0 to size-1 do(
+    for o := 0 to size-1 do(
+      printr(t[p][o]);
+      print(" ")
+    );
+    printline();
+  )
+
+end

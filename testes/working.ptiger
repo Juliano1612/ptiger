@@ -1,0 +1,93 @@
+/* Comentarios /*aninhados*/ */
+
+/*let .. in .. end*/
+let
+
+  /*Declaração explícita*/
+	var s:string := "Tiger"
+	var a:int := 0
+	var b:real := 1.5
+
+  /*Declaração implícita*/
+  var x := "Compilador"
+  var c := 0
+  var v := 15.3
+
+  /*Declaração de tipos*/
+    /*Tipos comuns*/
+	type myInt:int
+  type myReal:real
+  type myString:string
+    /*Arrays*/
+  type myArrayInt  = array of int
+	type myArrayReal = array of real
+  type myArrayStr  = array of string
+    /*Registros*/
+  type myRecord = {x:myInt, y:myReal, z:myString}
+
+  /*Declaração de variáveis Array (matriz ou vetor) e Registro*/
+	var vectReal := myArrayReal[10]
+	var vectInt  := myArrayInt [10][10]
+	var vectStr  := myArrayStr [10]
+	var rec:myRecord := {rec.x := 3 , rec.y := 23.9, rec.z := "Registro"}
+
+in
+
+  /*for .. to .. do*/
+  for i := 0 to 10 do(
+    vectReal[i] := i + 1.0;
+    vectStr[i] := "i mais um";
+    print(vectStr[i]); printline();
+    printr(vectReal[i]); printline();
+  );
+
+  /*while .. do*/
+  while a < 10 do(
+    while c < 10 do(
+      vectInt[a][c] := a + c;
+      c := c + 1
+    );
+    a := a + 1;
+    c := 0;
+  );
+  a := 0;
+  c := 0;
+  while a < 10 do(
+    while c < 10 do(
+      printi(vectInt[a][c]);
+      print(" ");
+      c := c + 1
+    );
+    printline();
+    a := a + 1;
+    c := 0
+  );
+
+  /* if .. then .. else */
+  if rec.x >= 0 then(
+    printline();
+    print("Rec.x eh maior do que zero! Vamos zerar!");
+    printline();
+    rec.x := 0
+  )else(
+    print("Eu nunca vou entrar aqui!");
+    printline()
+  );
+
+  if rec.x > 0 then(
+    print("Eu nunca vou entrar aqui!");
+    printline();
+  )else(
+    print("Agora Rec.x eh menor ou igual a zero!");
+    printline();
+    print("Vamos exibir seus outros campos (y e z)");
+    printline();
+    print("Y : "); printr(rec.y);
+    printline();
+    print("Z : "); print(rec.z);
+    printline();
+  );
+
+  print("Fim da execucao!");
+  printline()
+end
